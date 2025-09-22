@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table,TableHeader,TableRow,TableHead, TableBody, TableCell,} from "@/components/ui/table";
-import { Edit, Trash2 } from "lucide-react";
 
 type Props = {
   initialClear?: number | null;
@@ -28,22 +27,38 @@ export default function ClearsInjectedDataEntry({
   context,
 }: Props) {
   const [clearNum, setClearNum] = useState<string>(initialClear?.toString() ?? "");
-  const [injNum, setInjNum] = useState<string>(initialInjected?.toString() ?? "");
-
+  
   useEffect(() => {
     setClearNum(initialClear?.toString() ?? "");
-    setInjNum(initialInjected?.toString() ?? "");
-  }, [initialClear, initialInjected]);
+  }, [initialClear]);
 
-  const clear = Number.isFinite(Number(clearNum)) ? Number(clearNum) : NaN;
-  const injected = Number.isFinite(Number(injNum)) ? Number(injNum) : NaN;
+  const clear = useMemo(() => {
+    const n = Number(clearNum);
+    return Number.isFinite(n) ? Math.trunc(n) : NaN;
+  }, [clearNum]);
+  
+  const injected = useMemo(() => {
+    if (totalEggs == null || !Number.isInteger(clear) || clear < 0) return null;
+    const diff = totalEggs - clear;
+    return diff >= 0 ? diff : null; // null if clear > totalEggs (invalid)
+  }, [totalEggs, clear]);
 
-  const valid = Number.isInteger(clear) && clear >= 0 && Number.isInteger(injected) && injected >= 0;
+  const valid =
+    totalEggs != null &&
+    Number.isInteger(clear) &&
+    clear >= 0 &&
+    injected != null &&
+    Number.isInteger(injected) &&
+    injected >= 0;
 
   const clearPct =
-    valid && totalEggs && totalEggs > 0 ? ((clear / totalEggs) * 100).toFixed(2) : null;
+    valid && totalEggs! > 0 ? ((clear / totalEggs!) * 100).toFixed(2) : null;
   const injPct =
-    valid && totalEggs && totalEggs > 0 ? ((injected / totalEggs) * 100).toFixed(2) : null;
+    valid && totalEggs! > 0 && injected != null ? ((injected / totalEggs!) * 100).toFixed(2) : null;
+
+    const initialInjectedDisplay =
+    initialInjected ??
+    (totalEggs != null && initialClear != null ? Math.max(totalEggs - initialClear, 0) : null);
 
   return (
     <>
@@ -66,8 +81,12 @@ export default function ClearsInjectedDataEntry({
             {clearPct !== null && (
               <div className="text-xs text-gray-600">Clear %: {clearPct}%</div>
             )}
+            {totalEggs != null && Number.isInteger(clear) && clear > totalEggs && (
+                <div className="text-xs text-red-600">Clears cannot exceed total eggs.</div>
+              )}
           </div>
 
+          {/* Calculating Injected */}
           <div className="space-y-2">
             <Label htmlFor="injNum">Injected number *</Label>
             <Input
@@ -78,12 +97,17 @@ export default function ClearsInjectedDataEntry({
               min={0}
               pattern="\d*"
               placeholder="e.g., 43000"
-              value={injNum}
-              onChange={(e) => setInjNum(e.target.value.replace(/[^\d]/g, ""))}
+              value={injected ?? ""}
+              readOnly
             />
             {injPct !== null && (
               <div className="text-xs text-gray-600">Injected %: {injPct}%</div>
             )}
+            {totalEggs == null && (
+                <div className="text-xs text-gray-500">
+                  Enter total eggs to auto-calculate injected.
+                </div>
+              )}
           </div>
 
           <div className="flex items-end">
@@ -91,7 +115,7 @@ export default function ClearsInjectedDataEntry({
               onClick={() =>
                 onSave({
                   clear_number: Number(clearNum || 0),
-                  injected_number: Number(injNum || 0),
+                  injected_number: injected ?? 0,
                 })
               }
               disabled={!valid || saving}
@@ -140,7 +164,7 @@ export default function ClearsInjectedDataEntry({
                 </TableCell>
                 <TableCell>{initialClear ?? "—"}</TableCell>
                 <TableCell>{clearPct != null ? `${clearPct}%` : "—"}</TableCell>
-                <TableCell>{initialInjected ?? "—"}</TableCell>
+                <TableCell>{initialInjectedDisplay != null ? initialInjectedDisplay : "—"}</TableCell>
                 <TableCell>{injPct != null ? `${injPct}%` : "—"}</TableCell>
               </TableRow>
             </TableBody>

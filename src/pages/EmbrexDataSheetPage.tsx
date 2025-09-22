@@ -5,9 +5,10 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Download, FileSpreadsheet, AlertTriangle, BarChart3, Users, TrendingUp } from "lucide-react";
+import { Search, Download, ChartLine, FileSpreadsheet, AlertTriangle, BarChart3, Users, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { EmbrexTimeline } from "@/components/dashboard/EmbrexTimeline";
@@ -23,6 +24,7 @@ interface EmbrexData {
   eggs_injected: number | null;
   set_date: string;
   status: string;
+  unit_name: string | null;
 }
 
 const EmbrexDataSheetPage = () => {
@@ -33,6 +35,12 @@ const EmbrexDataSheetPage = () => {
   const [selectedHouses, setSelectedHouses] = useState<string[]>([]);
   const [comparisonMode, setComparisonMode] = useState<'all' | 'selected' | 'compare' | 'timeline'>('all');
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const backToTimelineQS =
+  (location.state as any)?.backToTimelineQS ||
+  (typeof window !== "undefined" ? sessionStorage.getItem("embrexTimelineQS") : null) ||
+  "scale=month&metric=total_eggs_set";
 
   useEffect(() => {
     document.title = "Embrex Data Sheet | Hatchery Dashboard";
@@ -62,7 +70,8 @@ const EmbrexDataSheetPage = () => {
         (item) =>
           item.flock_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.flock_number.toString().includes(searchTerm)
+          item.flock_number.toString().includes(searchTerm) ||
+          (item.unit_name ?? "").toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredData(filtered);
     }
@@ -80,6 +89,8 @@ const EmbrexDataSheetPage = () => {
           eggs_injected,
           set_date,
           status,
+          unit_id,
+          units ( name ),
           flocks!inner (
             flock_number,
             flock_name,
@@ -101,6 +112,7 @@ const EmbrexDataSheetPage = () => {
         eggs_injected: batch.eggs_injected,
         set_date: batch.set_date,
         status: batch.status,
+        unit_name: batch.units.name,
       })) || [];
 
       setData(formattedData);
@@ -166,6 +178,7 @@ const EmbrexDataSheetPage = () => {
     const headers = [
       "Flock #",
       "Flock Name", 
+      "Unit",
       "Age (weeks)",
       "Batch #",
       "Set Date",
@@ -180,6 +193,7 @@ const EmbrexDataSheetPage = () => {
     const csvData = filteredData.map(item => [
       item.flock_number,
       item.flock_name,
+      item.unit_name ?? "—",
       item.age_weeks,
       item.batch_number,
       new Date(item.set_date).toLocaleDateString(),
@@ -218,27 +232,27 @@ const EmbrexDataSheetPage = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
           <h1 className="text-3xl font-bold">Embrex Data Sheet</h1>
           <p className="text-muted-foreground">
             Comprehensive overview of all flock data including clears and injected statistics
           </p>
-        </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setComparisonMode('timeline')} 
-            className="gap-2"
-          >
-            <TrendingUp className="h-4 w-4" />
-            Timeline
-          </Button>
-          <Button onClick={exportToCSV} className="gap-2">
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => navigate(`/embrex-timeline?${backToTimelineQS}`)}
+          title="Open Timeline"
+        >
+          <ChartLine className="h-4 w-4" />
+          Timeline View
+        </Button>
+
+        <Button onClick={exportToCSV} className="gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
+    </div>
 
       {/* Validation Summary */}
       {validationSummary.invalidCount > 0 && (
@@ -309,25 +323,29 @@ const EmbrexDataSheetPage = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+
+            <CardContent className="min-h-0">
+              <div className="rounded-md border overflow-hidden">
+              <div className="relative max-h-[60vh] overflow-auto">
+                <Table className="min-w-full">
+                  <TableHeader className="sticky top-0 z-20 bg-background border-b">
                     <TableRow>
-                      <TableHead>Select</TableHead>
-                      <TableHead>Flock #</TableHead>
-                      <TableHead>Flock Name</TableHead>
-                      <TableHead>Age (weeks)</TableHead>
-                      <TableHead>Batch #</TableHead>
-                      <TableHead>Set Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Total Eggs</TableHead>
-                      <TableHead className="text-right">Clears</TableHead>
-                      <TableHead className="text-right">Clear %</TableHead>
-                      <TableHead className="text-right">Injected</TableHead>
-                      <TableHead className="text-right">Injected %</TableHead>
-                    </TableRow>
+                    <TableHead className="sticky top-0 z-20 bg-background">Select</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Flock#</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Flock Name</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Unit</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Age (weeks)</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Batch#</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Set Date</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Status</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Total Eggs</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Clears</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Clear%</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Injected</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Injected%</TableHead>
+                  </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {filteredData.map((item) => {
                       const validation = validateEmbrexData(item);
@@ -347,6 +365,7 @@ const EmbrexDataSheetPage = () => {
                           </TableCell>
                           <TableCell className="font-medium">{item.flock_number}</TableCell>
                           <TableCell>{item.flock_name}</TableCell>
+                          <TableCell>{item.unit_name ?? "—"}</TableCell>
                           <TableCell>{item.age_weeks}</TableCell>
                           <TableCell>{item.batch_number}</TableCell>
                           <TableCell>{new Date(item.set_date).toLocaleDateString()}</TableCell>
@@ -392,6 +411,7 @@ const EmbrexDataSheetPage = () => {
                   </TableBody>
                 </Table>
               </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -406,23 +426,25 @@ const EmbrexDataSheetPage = () => {
             </CardHeader>
             <CardContent>
               {selectedHouses.length > 0 ? (
-                <div className="overflow-x-auto">
+                <div className="sticky top-0 z-20 bg-background border-b">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 z-20 bg-background">
                       <TableRow>
-                        <TableHead>Flock Name</TableHead>
-                        <TableHead>Batch #</TableHead>
-                        <TableHead className="text-right">Total Eggs</TableHead>
-                        <TableHead className="text-right">Clears</TableHead>
-                        <TableHead className="text-right">Clear %</TableHead>
-                        <TableHead className="text-right">Injected</TableHead>
-                        <TableHead className="text-right">Injected %</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Flock Name</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Unit</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Batch #</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Total Eggs</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Clears</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Clear %</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Injected</TableHead>
+                        <TableHead className="sticky top-0 z-20 bg-background">Injected %</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {comparisonData.map((item) => (
                         <TableRow key={item.batch_id}>
                           <TableCell className="font-medium">{item.flock_name}</TableCell>
+                          <TableCell className="whitespace-nowrap">{item.unit_name ?? "—"}</TableCell>
                           <TableCell>{item.batch_number}</TableCell>
                           <TableCell className="text-right font-mono">{item.total_eggs_set.toLocaleString()}</TableCell>
                           <TableCell className="text-right font-mono">{item.eggs_cleared?.toLocaleString() ?? "—"}</TableCell>
