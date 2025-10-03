@@ -163,7 +163,10 @@ const ResidueBreakoutSheetPage = () => {
       "Fertile Eggs",
       "Early Dead",
       "Late Dead",
-      "Fertility Percent"
+      "Fertility Percent",
+      "Hatch",
+      "Hatch %",
+      "Hatch Over Fertile %"
     ];
 
     const csvData = filteredData.map(item => [
@@ -180,7 +183,11 @@ const ResidueBreakoutSheetPage = () => {
       item.fertile_eggs,
       item.early_dead,
       item.late_dead,
-      item.fertility_percent
+      item.fertility_percent,
+      (item.late_dead ?? 0) + (item.early_dead ?? 0),   // Embryonic Mortality
+      hatchCount(item),                                 // Hatch
+      hatchPct(item)?.toFixed(1),                       // Hatch %
+      hofPct(item)?.toFixed(1)      
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -209,6 +216,28 @@ const ResidueBreakoutSheetPage = () => {
 
     const fmtNum = (n: number | null | undefined) =>
     n == null ? "—" : Number(n).toLocaleString();
+
+    const nz = (n: number | null | undefined) => (n ?? 0);
+
+    const hatchCount = (item: ResidueBreakout) => {
+      const hatch = nz(item.fertile_eggs) - (nz(item.early_dead) + nz(item.late_dead));
+      return Math.max(0, hatch);
+    };
+
+    const hatchPct = (item: ResidueBreakout) => {
+      const denom = nz(item.sample_size);
+      if (denom <= 0) return null;
+      return (hatchCount(item) / denom) * 100;
+    };
+
+    const hofPct = (item: ResidueBreakout) => {
+      const denom = nz(item.fertile_eggs);
+      if (denom <= 0) return null;
+      return (hatchCount(item) / denom) * 100;
+    };
+
+    const fmtPct = (p: number | null) => (p == null ? "—" : `${p.toFixed(1)}%`);
+
 
 
   return (
@@ -283,7 +312,10 @@ const ResidueBreakoutSheetPage = () => {
                     <TableHead className="sticky top-0 z-20 bg-background">Early Dead</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background">Late Dead</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background">Fertility%</TableHead>
-                    <TableHead className="sticky top-0 z-20 bg-background">Total Embryonic Mortality</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Hatch</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Hatch %</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background text-right">Hatch Over Fertile %</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">Embryonic Mortality</TableHead>
                   </TableRow>
                   </TableHeader>
 
@@ -338,6 +370,15 @@ const ResidueBreakoutSheetPage = () => {
                         {fmtNum(item.fertility_percent)}
                     </TableCell>
                     <TableCell className="text-right font-mono">
+                      {fmtNum(hatchCount(item))}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {fmtPct(hatchPct(item))}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {fmtPct(hofPct(item))}
+                    </TableCell>
+                    <TableCell className="text-center font-mono">
                         {fmtNum(item.late_dead+ item.early_dead)}
                     </TableCell>
                     </TableRow>

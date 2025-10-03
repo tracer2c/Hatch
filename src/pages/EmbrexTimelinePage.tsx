@@ -31,7 +31,10 @@ type MetricKey =
     | "infertile_eggs"
     | "early_dead"
     | "late_dead"
-    | "total_embryonic_mortality";
+    | "total_embryonic_mortality"
+    | "hatch"          // NEW
+    | "hatch_pct"      // NEW
+    | "hof_pct";    
 
     /** ---------- Presets ---------- */
     type TimelineScope = "embrex" | "breakout";
@@ -53,6 +56,9 @@ type MetricKey =
         "early_dead",
         "fertility_percent",
         "total_embryonic_mortality",
+        "hatch",        // NEW
+        "hatch_pct",    // NEW
+        "hof_pct",   
     ],
     }
 
@@ -102,6 +108,27 @@ const fmtBucketLabel = (d: Date, g: Granularity) => {
     return `${y}-${m}-${day}`;
 };
 
+// --- Hatch helpers ---
+const nz = (n: number | null | undefined) => (n ?? 0);
+
+const hatchCountRow = (r: RawRow) => {
+  const hatch = nz(r.fertile_eggs) - (nz(r.early_dead) + nz(r.late_dead));
+  return Math.max(0, hatch);
+};
+
+const hatchPctRow = (r: RawRow) => {
+  const denom = nz(r.sample_size);
+  if (denom <= 0) return 0;
+  return (hatchCountRow(r) / denom) * 100;
+};
+
+const hofPctRow = (r: RawRow) => {
+  const denom = nz(r.fertile_eggs);
+  if (denom <= 0) return 0;
+  return (hatchCountRow(r) / denom) * 100;
+};
+
+
 const startOfBucket = (d: Date, g: Granularity) => {
     const y = d.getFullYear();
     if (g === "year") return new Date(y, 0, 1);
@@ -133,6 +160,9 @@ const metricLabel: Record<MetricKey, string> = {
     late_dead: "Late Dead",
     fertility_percent: "Fertility Percent",
     total_embryonic_mortality: "Total Embryonic Mortality",
+    hatch: "Hatch",                        // NEW
+    hatch_pct: "Hatch %",                  // NEW
+    hof_pct: "Hatch Over Fertile %", 
 };
 
 const ALL_METRICS = [
@@ -149,13 +179,16 @@ const ALL_METRICS = [
   "late_dead",
   "fertility_percent",
   "total_embryonic_mortality",
+  "hatch",        // NEW
+  "hatch_pct",    // NEW
+  "hof_pct",  
 ] as const;
 
 const isMetricKey = (v: unknown): v is MetricKey =>
   (ALL_METRICS as readonly string[]).includes(String(v));
 
 const isPercentMetric = (m: MetricKey) =>
-    m === "clear_pct" || m === "injected_pct" || m === "fertility_percent";
+    m === "clear_pct" || m === "injected_pct" || m === "fertility_percent" || m === "hatch_pct" || m === "hof_pct";   
 
 const metricKind = (m: MetricKey) => (isPercentMetric(m) ? "pct" : "count") as "pct" | "count";
 
@@ -439,8 +472,20 @@ export default function EmbrexTimelinePage() {
         if (m === "total_embryonic_mortality") {
             return (r.early_dead ?? 0) + (r.late_dead ?? 0);
         }
+        // NEW metrics
+        if (m === "hatch") {
+            return hatchCountRow(r);          // count -> summed per bucket
+        }
+        if (m === "hatch_pct") {
+            return hatchPctRow(r);            // percent -> averaged per bucket
+        }
+        if (m === "hof_pct") {
+            return hofPctRow(r);              // percent -> averaged per bucket
+        }
+
         return (r as any)[m] ?? 0;
         })();
+
 
         if (!buckets.has(key)) buckets.set(key, { bucketKey: key, dateForPlot: start, value: 0, raw: [] });
         const b = buckets.get(key)!;

@@ -339,7 +339,7 @@ const EmbrexDataSheetPage = () => {
                     <TableHead className="sticky top-0 z-20 bg-background">Flock Name</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background">Unit</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background">Age (weeks)</TableHead>
-                    <TableHead className="sticky top-0 z-20 bg-background">Batch#</TableHead>
+                    <TableHead className="sticky top-0 z-20 bg-background">House#</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background">Set Date</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background">Status</TableHead>
                     <TableHead className="sticky top-0 z-20 bg-background text-right">Total Eggs</TableHead>
@@ -371,7 +371,7 @@ const EmbrexDataSheetPage = () => {
                           <TableCell>{item.flock_name}</TableCell>
                           <TableCell>{item.unit_name ?? "—"}</TableCell>
                           <TableCell>{item.age_weeks}</TableCell>
-                          <TableCell>{item.batch_number}</TableCell>
+                           <TableCell>{item.batch_number?.match(/#\d+/)?.[0] ?? ""}</TableCell>
                           <TableCell>{new Date(item.set_date).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
