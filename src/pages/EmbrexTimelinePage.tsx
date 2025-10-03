@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation} from "react-router-dom";
 import { Table as TableIcon } from "lucide-react";
 import { Loader2, Calendar as CalendarIcon, RefreshCw, ChevronsUpDown, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,10 +21,44 @@ type ChartMode = "bar" | "line";
 type MetricKey =
     | "age_weeks"
     | "total_eggs_set"
+    | "sample_size"
     | "eggs_cleared"
     | "eggs_injected"
     | "clear_pct"
-    | "injected_pct";
+    | "injected_pct"
+    | "fertility_percent"
+    | "fertile_eggs"
+    | "infertile_eggs"
+    | "early_dead"
+    | "late_dead"
+    | "total_embryonic_mortality";
+
+    /** ---------- Presets ---------- */
+    type TimelineScope = "embrex" | "breakout";
+
+    const METRIC_PRESETS: Record<TimelineScope, MetricKey[]> = {
+    embrex: [
+        "age_weeks",
+        "total_eggs_set",
+        "eggs_cleared",
+        "eggs_injected",
+        "clear_pct",
+        "injected_pct",
+    ],
+    breakout: [
+        "sample_size",
+        "infertile_eggs",
+        "fertile_eggs",
+        "late_dead",
+        "early_dead",
+        "fertility_percent",
+        "total_embryonic_mortality",
+    ],
+    }
+
+    // validators for URL params
+    const validScale = (s: any) => ["year", "month", "week", "day"].includes(s);
+    const validMetric = (m: any): m is MetricKey => (m != null) && (m === String(m)) && (m as string).length > 0; // optionally tighten to ALL_METRICS.includes(m)
 
 interface RawRow {
     batch_id: string;
@@ -34,10 +68,16 @@ interface RawRow {
     flock_name: string;
     age_weeks: number;
     total_eggs_set: number;
+    sample_size:number;
     eggs_cleared: number | null;
     eggs_injected: number | null;
     set_date: string;
     status: string;
+    fertility_percent: number;
+    infertile_eggs : number | null;
+    fertile_eggs : number | null;
+    early_dead : number | null;
+    late_dead : number | null;
 }
 
 interface BucketPoint {
@@ -82,43 +122,59 @@ const startOfBucket = (d: Date, g: Granularity) => {
 const metricLabel: Record<MetricKey, string> = {
     age_weeks: "Age (weeks)",
     total_eggs_set: "Total Eggs",
+    sample_size: "Sample Size",
     eggs_cleared: "Clears",
     eggs_injected: "Injected",
     clear_pct: "Clear %",
     injected_pct: "Injected %",
+    fertile_eggs: "Fertile Eggs",
+    infertile_eggs: "Infertile Eggs",
+    early_dead: "Early Dead",
+    late_dead: "Late Dead",
+    fertility_percent: "Fertility Percent",
+    total_embryonic_mortality: "Total Embryonic Mortality",
 };
 
 const ALL_METRICS = [
-    "age_weeks", "total_eggs_set", "eggs_cleared", "eggs_injected",
-    "clear_pct", "injected_pct",
+  "age_weeks",
+  "total_eggs_set",
+  "sample_size",
+  "eggs_cleared",
+  "eggs_injected",
+  "clear_pct",
+  "injected_pct",
+  "fertile_eggs",
+  "infertile_eggs",
+  "early_dead",
+  "late_dead",
+  "fertility_percent",
+  "total_embryonic_mortality",
 ] as const;
-const isMetricKey = (x: string): x is MetricKey =>
-    (ALL_METRICS as readonly string[]).includes(x);
 
-const METRIC_PRESETS: Record<string, MetricKey[]> = {
-  Counts: ["total_eggs_set","eggs_cleared","eggs_injected"],
-  Percentages: ["clear_pct","injected_pct"]
-};
+const isMetricKey = (v: unknown): v is MetricKey =>
+  (ALL_METRICS as readonly string[]).includes(String(v));
 
 const isPercentMetric = (m: MetricKey) =>
-    m === "clear_pct" || m === "injected_pct";
+    m === "clear_pct" || m === "injected_pct" || m === "fertility_percent";
 
 const metricKind = (m: MetricKey) => (isPercentMetric(m) ? "pct" : "count") as "pct" | "count";
 
-// validators for URL params
-const validScale = (s: any) => ["year", "month", "week", "day"].includes(s);
-const validMetric = (m: any) =>
-    ["age_weeks", "total_eggs_set", "eggs_cleared", "eggs_injected", "clear_pct", "injected_pct"
-    ].includes(m);
 
 /** ---------- Page ---------- */
 export default function EmbrexTimelinePage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [rows, setRows] = useState<RawRow[]>([]);
+    const location = useLocation();
+    // read where we came from: query ?scope=breakout|embrex OR location.state?.scope
+    const [searchParams, setSearchParams] = useSearchParams();
+    const scopeParam = (searchParams.get("scope") as TimelineScope) || (location.state as any)?.scope;
+    const scope: TimelineScope = scopeParam === "breakout" ? "breakout" : "embrex";
+
+    // list of metrics to show in controls for this page
+    const availableMetrics = METRIC_PRESETS[scope];
 
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
     const [compareOpen, setCompareOpen] = useState(false);
 
 
@@ -134,15 +190,15 @@ export default function EmbrexTimelinePage() {
 
     const DEFAULT_METRICS: readonly MetricKey[] = ["total_eggs_set"];
 
+    
     const [metrics, setMetrics] = useState<MetricKey[]>(() => {
-        const m = searchParams.get("metrics") ?? searchParams.get("metric");
-        const list: MetricKey[] = m
-            ? m.split(",").filter(isMetricKey)                   // type-guard → MetricKey[]
-            : [...DEFAULT_METRICS];                              // ensure MetricKey[] (not string[])
-        return Array.from(new Set(list)).slice(0, 4);          // unique + cap at 4
+    const m = searchParams.get("metrics") ?? searchParams.get("metric");
+    const list = m ? m.split(",").filter(isMetricKey) : [availableMetrics[0]];
+    return Array.from(new Set(list)).slice(0, 4);
     });
 
-    const metric = useMemo<MetricKey>(() => metrics[0] ?? "total_eggs_set", [metrics]);
+
+    const primaryMetric = useMemo<MetricKey>(() => metrics[0] ?? "total_eggs_set", [metrics]);
 
     const [unitFilter, setUnitFilter] = useState<string>(() => searchParams.get("unit") || "all");
 
@@ -189,7 +245,7 @@ export default function EmbrexTimelinePage() {
         // immediately sync URL + memory (optional but snappy)
         const sp = new URLSearchParams();
         sp.set("scale", DEFAULTS.scale);
-        sp.set("metrics", metrics.join(","));
+        sp.set("metrics", DEFAULTS.metric);
         sp.set("view", DEFAULTS.view);
         setSearchParams(sp, { replace: true });
         sessionStorage.setItem("embrexTimelineQS", sp.toString());
@@ -238,7 +294,8 @@ export default function EmbrexTimelinePage() {
         if (dateTo) sp.set("to", dateTo);
         setSearchParams(sp, { replace: true });
         sessionStorage.setItem("embrexTimelineQS", sp.toString());
-    }, [granularity, metrics, chartMode, selectedFlocks, selectedFlock, dateFrom, dateTo, setSearchParams]);
+    }, [granularity, metrics, chartMode, selectedFlocks, selectedFlock, dateFrom, dateTo, unitFilter, selectedUnits, facetBy, setSearchParams]);
+
 
     // Load data
     useEffect(() => {
@@ -256,31 +313,45 @@ export default function EmbrexTimelinePage() {
                     set_date,
                     status,
                     units ( name ),
-                    flocks!inner(
-                    flock_number,
-                    flock_name,
-                    age_weeks
+                    flocks!inner ( flock_number, flock_name, age_weeks ),
+                    fertility:fertility_analysis!fertility_analysis_batch_id_fkey (
+                    id,
+                    sample_size,
+                    fertile_eggs,
+                    infertile_eggs,
+                    fertility_percent,
+                    early_dead,
+                    late_dead
                     )
-                `)
+                                `)
                     .order("set_date", { ascending: true });
 
                 if (error) throw error;
 
+                const pickFert = (arr: any[] | null | undefined) =>
+                Array.isArray(arr) && arr.length ? arr.reduce((a, b) => (Number(b.id) > Number(a.id) ? b : a)) : null;
+
                 const formatted: RawRow[] =
                     (data || []).map((b: any) => {
-                        const fert = b.fertility_analysis?.[0] ?? b.fertility_analysis ?? null;
+                        const fert = Array.isArray(b.fertility) ? (b.fertility[0] ?? null) : (b.fertility ?? null);
                         return {
                             batch_id: b.id,
                             batch_number: b.batch_number,
-                            flock_number: b.flocks.flock_number,
-                            unit_name: b.units.name,
-                            flock_name: b.flocks.flock_name,
-                            age_weeks: b.flocks.age_weeks,
+                            flock_number: b.flocks.flock_number ?? 0,
+                            unit_name: b.units.name ?? "",
+                            flock_name: b.flocks.flock_name ?? "",
+                            age_weeks: b.flocks.age_weeks ?? 0,
                             total_eggs_set: b.total_eggs_set,
                             eggs_cleared: b.eggs_cleared,
                             eggs_injected: b.eggs_injected,
                             set_date: b.set_date,
                             status: b.status,
+                            sample_size: fert?.sample_size,
+                            fertile_eggs: fert?.fertile_eggs ?? null,
+                            infertile_eggs: fert?.infertile_eggs ?? null,
+                            early_dead: fert?.early_dead ?? null,
+                            late_dead: fert?.late_dead ?? null,
+                            fertility_percent: fert?.fertility_percent,
                         };
                     }) ?? [];
 
@@ -353,8 +424,21 @@ export default function EmbrexTimelinePage() {
         const key = fmtBucketLabel(start, g);
 
         const val = (() => {
-        if (m === "clear_pct")         return (!r.eggs_cleared || r.total_eggs_set === 0) ? 0 : (r.eggs_cleared / r.total_eggs_set) * 100;
-        if (m === "injected_pct")      return (!r.eggs_injected || r.total_eggs_set === 0) ? 0 : (r.eggs_injected / r.total_eggs_set) * 100;
+        if (m === "clear_pct") {
+            if (!r.eggs_cleared || r.total_eggs_set === 0) return 0;
+            return (r.eggs_cleared / r.total_eggs_set) * 100;
+        }
+        if (m === "injected_pct") {
+            if (!r.eggs_injected || r.total_eggs_set === 0) return 0;
+            return (r.eggs_injected / r.total_eggs_set) * 100;
+        }
+        if (m === "fertility_percent") {
+            if (!r.fertile_eggs || r.sample_size === 0) return 0;
+            return (r.fertile_eggs / r.sample_size) * 100;
+        }
+        if (m === "total_embryonic_mortality") {
+            return (r.early_dead ?? 0) + (r.late_dead ?? 0);
+        }
         return (r as any)[m] ?? 0;
         })();
 
@@ -477,7 +561,7 @@ export default function EmbrexTimelinePage() {
                 <div>
                     <h1 className="text-3xl font-bold">Embrex Timeline</h1>
                     <p className="text-muted-foreground">
-                        Displays {metricLabel[metric]} over time by flock and time scale
+                        Displays {metrics.length ? metrics.map(m => metricLabel[m]).join(", ") : metricLabel[primaryMetric]} over time by flock and time scale
                     </p>
                 </div>
 

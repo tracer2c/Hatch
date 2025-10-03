@@ -240,11 +240,15 @@ const EmbrexDataSheetPage = () => {
         <Button
           variant="outline"
           className="gap-2"
-          onClick={() => navigate(`/embrex-timeline?${backToTimelineQS}`)}
+          onClick={() =>
+            navigate(`/embrex-timeline?${backToTimelineQS}&scope=embrex`, {
+              state: { scope: "embrex" },
+            })
+          }
           title="Open Timeline"
         >
           <ChartLine className="h-4 w-4" />
-          Timeline View
+          Timeline Comparison
         </Button>
 
         <Button onClick={exportToCSV} className="gap-2">

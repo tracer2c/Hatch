@@ -58,6 +58,12 @@ const navigationItems = [
     requiresAuth: true
   },
   {
+    path: '/residue-breakout',
+    label: 'Residue Breakout',
+    icon: BarChart3,
+    requiresAuth: true
+  },
+  {
     path: '/checklist',
     label: 'Daily Tasks',
     icon: CheckSquare,

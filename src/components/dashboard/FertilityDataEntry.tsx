@@ -172,7 +172,7 @@ const isFormValid = () => {
         early_dead: earlyDead,
         late_dead: lateDead,
         cull_chicks: cullChicks,
-        fertility_percent: calculated.fertilityPercent,
+        //fertility_percent: calculated.fertilityPercent,
         hatch_percent: calculated.hatchPercent,
         hof_percent: calculated.hofPercent,
         hoi_percent: calculated.hoiPercent,

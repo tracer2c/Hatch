@@ -71,7 +71,23 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
     flockNumber: batchInfo.flock_number.toString(),
     houseNumber: batchInfo.house_number || '1',
     infertile: '',
-    earlyDeath: ''
+    chicks: '',
+    earlyDeath: '',
+    live: '',
+    dead: '',
+    midDeath: '',
+    lateDeath: '',
+    cullChicks: '',
+    handlingCracks: '',
+    transferCrack: '',
+    contamination: '',
+    mold: '',
+    abnormal: '',
+    brain: '',
+    dryEgg: '',
+    malpositioned: '',
+    upsideDown: '',
+    pipNumber: ''
   });
   const { toast } = useToast();
 
@@ -82,7 +98,12 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
   };
 
   const calculateTotalUsed = () => {
-    const values = ['infertile', 'earlyDeath'];
+    const values = [
+      'infertile', 'chicks', 'earlyDeath', 'live', 'dead', 'midDeath', 
+      'lateDeath', 'cullChicks', 'handlingCracks', 'transferCrack', 
+      'contamination', 'mold', 'abnormal', 'brain', 'dryEgg', 
+      'malpositioned', 'upsideDown'
+    ];
     
     return values.reduce((sum, field) => {
       const value = Number(formData[field as keyof typeof formData]) || 0;
@@ -128,38 +149,37 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
       houseNumber: Number(formData.houseNumber),
       infertile: Number(formData.infertile) || 0,
       infertilePercent: calculatePercentage(Number(formData.infertile) || 0),
+      chicks: Number(formData.chicks) || 0,
       earlyDeath: Number(formData.earlyDeath) || 0,
       earlyDeathPercent: calculatePercentage(Number(formData.earlyDeath) || 0),
-      // Set all other fields to 0 for database compatibility
-      chicks: 0,
-      live: 0,
-      livePercent: 0,
-      dead: 0,
-      deadPercent: 0,
-      midDeath: 0,
-      midDeathPercent: 0,
-      lateDeath: 0,
-      lateDeathPercent: 0,
-      cullChicks: 0,
-      handlingCracks: 0,
-      handlingCracksPercent: 0,
-      transferCrack: 0,
-      transferCrackPercent: 0,
-      contamination: 0,
-      contaminationPercent: 0,
-      mold: 0,
-      moldPercent: 0,
-      abnormal: 0,
-      abnormalPercent: 0,
-      brain: 0,
-      brainPercent: 0,
-      dryEgg: 0,
-      dryEggPercent: 0,
-      malpositioned: 0,
-      malpositionedPercent: 0,
-      upsideDown: 0,
-      upsideDownPercent: 0,
-      pipNumber: 0,
+      live: Number(formData.live) || 0,
+      livePercent: calculatePercentage(Number(formData.live) || 0),
+      dead: Number(formData.dead) || 0,
+      deadPercent: calculatePercentage(Number(formData.dead) || 0),
+      midDeath: Number(formData.midDeath) || 0,
+      midDeathPercent: calculatePercentage(Number(formData.midDeath) || 0),
+      lateDeath: Number(formData.lateDeath) || 0,
+      lateDeathPercent: calculatePercentage(Number(formData.lateDeath) || 0),
+      cullChicks: Number(formData.cullChicks) || 0,
+      handlingCracks: Number(formData.handlingCracks) || 0,
+      handlingCracksPercent: calculatePercentage(Number(formData.handlingCracks) || 0),
+      transferCrack: Number(formData.transferCrack) || 0,
+      transferCrackPercent: calculatePercentage(Number(formData.transferCrack) || 0),
+      contamination: Number(formData.contamination) || 0,
+      contaminationPercent: calculatePercentage(Number(formData.contamination) || 0),
+      mold: Number(formData.mold) || 0,
+      moldPercent: calculatePercentage(Number(formData.mold) || 0),
+      abnormal: Number(formData.abnormal) || 0,
+      abnormalPercent: calculatePercentage(Number(formData.abnormal) || 0),
+      brain: Number(formData.brain) || 0,
+      brainPercent: calculatePercentage(Number(formData.brain) || 0),
+      dryEgg: Number(formData.dryEgg) || 0,
+      dryEggPercent: calculatePercentage(Number(formData.dryEgg) || 0),
+      malpositioned: Number(formData.malpositioned) || 0,
+      malpositionedPercent: calculatePercentage(Number(formData.malpositioned) || 0),
+      upsideDown: Number(formData.upsideDown) || 0,
+      upsideDownPercent: calculatePercentage(Number(formData.upsideDown) || 0),
+      pipNumber: Number(formData.pipNumber) || 0,
       totalEggs: TOTAL_EGGS
     };
 
@@ -188,7 +208,23 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
       flockNumber: record.flockNumber.toString(),
       houseNumber: record.houseNumber.toString(),
       infertile: record.infertile.toString(),
-      earlyDeath: record.earlyDeath.toString()
+      chicks: record.chicks.toString(),
+      earlyDeath: record.earlyDeath.toString(),
+      live: record.live.toString(),
+      dead: record.dead.toString(),
+      midDeath: record.midDeath.toString(),
+      lateDeath: record.lateDeath.toString(),
+      cullChicks: record.cullChicks.toString(),
+      handlingCracks: record.handlingCracks.toString(),
+      transferCrack: record.transferCrack.toString(),
+      contamination: record.contamination.toString(),
+      mold: record.mold.toString(),
+      abnormal: record.abnormal.toString(),
+      brain: record.brain.toString(),
+      dryEgg: record.dryEgg.toString(),
+      malpositioned: record.malpositioned.toString(),
+      upsideDown: record.upsideDown.toString(),
+      pipNumber: record.pipNumber.toString()
     });
   };
 
@@ -208,7 +244,23 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
       flockNumber: batchInfo.flock_number.toString(),
       houseNumber: batchInfo.house_number || '1',
       infertile: '',
-      earlyDeath: ''
+      chicks: '',
+      earlyDeath: '',
+      live: '',
+      dead: '',
+      midDeath: '',
+      lateDeath: '',
+      cullChicks: '',
+      handlingCracks: '',
+      transferCrack: '',
+      contamination: '',
+      mold: '',
+      abnormal: '',
+      brain: '',
+      dryEgg: '',
+      malpositioned: '',
+      upsideDown: '',
+      pipNumber: ''
     });
   };
 
@@ -264,7 +316,7 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
               />
             </div>
 
-            {/* Simplified Core Metrics - Only Infertile and Early Death */}
+            {/* Core Metrics */}
             <div className="space-y-2">
               <Label htmlFor="infertile">Infertile</Label>
               <Input
@@ -274,11 +326,16 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
                 value={formData.infertile}
                 onChange={(e) => handleInputChange('infertile', e.target.value)}
               />
-              {formData.infertile && (
-                <p className="text-sm text-muted-foreground">
-                  {calculatePercentage(Number(formData.infertile))}% of total
-                </p>
-              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="chicks">Chicks</Label>
+              <Input
+                id="chicks"
+                type="number"
+                placeholder="e.g., 496"
+                value={formData.chicks}
+                onChange={(e) => handleInputChange('chicks', e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="earlyDeath">Early Dead (1-7 days)</Label>
@@ -289,13 +346,169 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
                 value={formData.earlyDeath}
                 onChange={(e) => handleInputChange('earlyDeath', e.target.value)}
               />
-              {formData.earlyDeath && (
-                <p className="text-sm text-muted-foreground">
-                  {calculatePercentage(Number(formData.earlyDeath))}% of total
-                </p>
-              )}
+            </div>
+
+            {/* Transfer Data */}
+            <div className="space-y-2">
+              <Label htmlFor="live">Live (at transfer)</Label>
+              <Input
+                id="live"
+                type="number"
+                placeholder="e.g., 520"
+                value={formData.live}
+                onChange={(e) => handleInputChange('live', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dead">Dead (at transfer)</Label>
+              <Input
+                id="dead"
+                type="number"
+                placeholder="e.g., 12"
+                value={formData.dead}
+                onChange={(e) => handleInputChange('dead', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="midDeath">Mid Dead (7-14 days)</Label>
+              <Input
+                id="midDeath"
+                type="number"
+                placeholder="e.g., 8"
+                value={formData.midDeath}
+                onChange={(e) => handleInputChange('midDeath', e.target.value)}
+              />
+            </div>
+
+            {/* Death Categories */}
+            <div className="space-y-2">
+              <Label htmlFor="lateDeath">Late Death (15-21 days)</Label>
+              <Input
+                id="lateDeath"
+                type="number"
+                placeholder="e.g., 22"
+                value={formData.lateDeath}
+                onChange={(e) => handleInputChange('lateDeath', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cullChicks">Cull Chicks</Label>
+              <Input
+                id="cullChicks"
+                type="number"
+                placeholder="e.g., 5"
+                value={formData.cullChicks}
+                onChange={(e) => handleInputChange('cullChicks', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="handlingCracks">Handling Cracks</Label>
+              <Input
+                id="handlingCracks"
+                type="number"
+                placeholder="e.g., 3"
+                value={formData.handlingCracks}
+                onChange={(e) => handleInputChange('handlingCracks', e.target.value)}
+              />
+            </div>
+
+            {/* Quality Issues */}
+            <div className="space-y-2">
+              <Label htmlFor="transferCrack">Transfer Crack</Label>
+              <Input
+                id="transferCrack"
+                type="number"
+                placeholder="e.g., 2"
+                value={formData.transferCrack}
+                onChange={(e) => handleInputChange('transferCrack', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contamination">Contamination</Label>
+              <Input
+                id="contamination"
+                type="number"
+                placeholder="e.g., 2"
+                value={formData.contamination}
+                onChange={(e) => handleInputChange('contamination', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mold">Mold</Label>
+              <Input
+                id="mold"
+                type="number"
+                placeholder="e.g., 1"
+                value={formData.mold}
+                onChange={(e) => handleInputChange('mold', e.target.value)}
+              />
+            </div>
+
+            {/* Embryo Problems */}
+            <div className="space-y-2">
+              <Label htmlFor="abnormal">Abnormal</Label>
+              <Input
+                id="abnormal"
+                type="number"
+                placeholder="e.g., 4"
+                value={formData.abnormal}
+                onChange={(e) => handleInputChange('abnormal', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brain">Brain Defects</Label>
+              <Input
+                id="brain"
+                type="number"
+                placeholder="e.g., 1"
+                value={formData.brain}
+                onChange={(e) => handleInputChange('brain', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dryEgg">Dry Egg</Label>
+              <Input
+                id="dryEgg"
+                type="number"
+                placeholder="e.g., 3"
+                value={formData.dryEgg}
+                onChange={(e) => handleInputChange('dryEgg', e.target.value)}
+              />
+            </div>
+
+            {/* Position Issues */}
+            <div className="space-y-2">
+              <Label htmlFor="malpositioned">Malpositioned</Label>
+              <Input
+                id="malpositioned"
+                type="number"
+                placeholder="e.g., 6"
+                value={formData.malpositioned}
+                onChange={(e) => handleInputChange('malpositioned', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="upsideDown">Upside Down</Label>
+              <Input
+                id="upsideDown"
+                type="number"
+                placeholder="e.g., 2"
+                value={formData.upsideDown}
+                onChange={(e) => handleInputChange('upsideDown', e.target.value)}
+              />
             </div>
             
+            {/* PIP Number */}
+            <div className="space-y-2">
+              <Label htmlFor="pipNumber">PIP Number</Label>
+              <Input
+                id="pipNumber"
+                type="number"
+                placeholder="e.g., 15"
+                value={formData.pipNumber}
+                onChange={(e) => handleInputChange('pipNumber', e.target.value)}
+              />
+            </div>
           </div>
 
           {/* Validation Display */}
@@ -362,7 +575,13 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
                   <TableHead>Flock #</TableHead>
                   <TableHead>House #</TableHead>
                   <TableHead>Infertile</TableHead>
+                  <TableHead>Chicks</TableHead>
                   <TableHead>Early Dead</TableHead>
+                  <TableHead>Mid Dead</TableHead>
+                  <TableHead>Late Death</TableHead>
+                  <TableHead>Contamination</TableHead>
+                  <TableHead>Mold</TableHead>
+                  <TableHead>Abnormal</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -372,11 +591,25 @@ const ResidueDataEntry = ({ data, onDataUpdate, batchInfo }: ResidueDataEntryPro
                     <TableCell className="font-medium">{record.name}</TableCell>
                     <TableCell>{record.flockNumber}</TableCell>
                     <TableCell>{record.houseNumber}</TableCell>
-                    <TableCell className="font-medium">
-                      {record.infertile} ({record.infertilePercent}%)
+                    <TableCell>{record.infertile} ({record.infertilePercent}%)</TableCell>
+                    <TableCell>{record.chicks}</TableCell>
+                    <TableCell>{record.earlyDeath} ({record.earlyDeathPercent}%)</TableCell>
+                    <TableCell>{record.midDeath} ({record.midDeathPercent}%)</TableCell>
+                    <TableCell>{record.lateDeath} ({record.lateDeathPercent}%)</TableCell>
+                    <TableCell 
+                      className={record.contaminationPercent > 1 ? "text-red-600 font-medium" : ""}
+                    >
+                      {record.contamination} ({record.contaminationPercent}%)
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {record.earlyDeath} ({record.earlyDeathPercent}%)
+                    <TableCell 
+                      className={record.moldPercent > 1 ? "text-red-600 font-medium" : ""}
+                    >
+                      {record.mold} ({record.moldPercent}%)
+                    </TableCell>
+                    <TableCell 
+                      className={record.abnormalPercent > 2 ? "text-red-600 font-medium" : ""}
+                    >
+                      {record.abnormal} ({record.abnormalPercent}%)
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

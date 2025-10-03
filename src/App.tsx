@@ -27,6 +27,7 @@ import ComparisonModelPage from "./pages/ComparisonModelPage";
 import UnitComparisonPage from "./pages/UnitComparisonPage";
 import HouseFlowPage from "./pages/HouseFlowPage";
 import EmbrexDataSheetPage from "./pages/EmbrexDataSheetPage";
+import ResidueBreakoutSheetPage from "./pages/ResidueBreakout";
 import EmbrexTimelinePage from "./pages/EmbrexTimelinePage";
 import MachineDetailPage from "./pages/MachineDetailPage";
 import HouseDetailPage from "./pages/HouseDetailPage";
@@ -64,6 +65,7 @@ const App = () => (
                             <Route path="/analytics" element={<AnalyticsPage />} />
                             <Route path="/embrex-data-sheet" element={<EmbrexDataSheetPage />} />
                             <Route path="/embrex-timeline" element={<EmbrexTimelinePage />} />
+                            <Route path="/residue-breakout" element={<ResidueBreakoutSheetPage/>} />
                             <Route path="/comparison-model" element={<ComparisonModelPage />} />
                             <Route path="/unit-comparison" element={<UnitComparisonPage />} />
                             <Route path="/house-flow" element={<HouseFlowPage />} />
