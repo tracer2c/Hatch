@@ -1,0 +1,10 @@
+# SPA fallback for client-side routing
+# Netlify-style redirects: send all paths to index.html
+# If your host ignores this file, the 404.html we include will handle fallback.
+# Syntax: https://docs.netlify.com/routing/redirects/redirect-options/
+
+# The following line ensures all routes render the SPA
+# Route all requests to index.html
+# The 200 status tells the host it's a rewrite, not a redirect
+
+/* /index.html 200

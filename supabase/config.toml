@@ -1,0 +1,78 @@
+project_id = "xgpizkqbhybbqytgmtum"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+port = 54323
+ip_version = "ipv4"
+
+[studio]
+enabled = true
+port = 54324
+api_url = "http://127.0.0.1:54321"
+openai_api_key = "env(OPENAI_API_KEY)"
+
+[inbucket]
+enabled = true
+port = 54325
+smtp_port = 54326
+pop3_port = 54327
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+image_transformation = true
+
+[auth]
+enabled = true
+port = 54327
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_email_confirmations = false
+enable_email_change_confirmations = true
+enable_phone_confirmations = false
+enable_phone_change_confirmations = true
+
+[functions.ai-chat]
+verify_jwt = true
+
+[functions.chart-insights]
+verify_jwt = true
+
+[functions.check-alerts]
+verify_jwt = false
+
+[functions.predict-metrics]
+verify_jwt = true
+
+[functions.vector-sync]
+verify_jwt = false
+
+[functions.contextual-help]
+verify_jwt = true
+
+[edge_runtime]
+inspector_port = 54328
+
+[experimental]
+enable_logs = true
